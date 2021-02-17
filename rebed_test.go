@@ -2,7 +2,6 @@ package rebed_test
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -19,36 +18,77 @@ var testFS embed.FS
 // this is where filesystems are created
 const testDir = "testdata/testdir"
 
+func setup(path string, t *testing.T) {
+	os.RemoveAll(path)
+	os.MkdirAll(path, 0777)
+	err := os.Chdir(path)
+	if err != nil {
+		t.Error(err)
+	}
+}
 func TestTree(t *testing.T) {
-	os.RemoveAll(testDir)
-	os.Mkdir(testDir, 0777)
-	err := os.Chdir(testDir)
+	tDir := filepath.Join(testDir, t.Name())
+	setup(tDir, t)
+	defer os.RemoveAll(tDir)
+	err := rebed.Tree(testFS)
 	if err != nil {
 		t.Error(err)
 	}
-	err = rebed.Tree(testFS)
-	if err != nil {
-		t.Error(err)
-	}
-	// fsFolder := baseFolder(testFS)
 	// We search our embedded directories and check if our created filesystem has the entries
 	err = rebed.Walk(testFS, ".", func(path string, de fs.DirEntry) error {
 		pathToCreated := filepath.Join(path, de.Name())
 		if de.IsDir() {
 			info, err := os.Stat(pathToCreated)
-			if err != nil {
-				t.Error(err)
+			if os.IsNotExist(err) {
+				t.Errorf("folder %q not found", pathToCreated)
 			}
 			if !info.IsDir() {
-				t.Errorf("folder %q not found", pathToCreated)
+				t.Errorf("expected a folder %q, got file", pathToCreated)
+			}
+			if err != nil {
+				t.Error(err)
 			}
 		}
 		return nil
 	})
 }
 
-func cleanup() error {
-	matcher := filepath.Join(testDir, "*")
+func TestTouch(t *testing.T) {
+	testFileCreation(rebed.Touch, t)
+}
+
+func TestCreate(t *testing.T) {
+	testFileCreation(rebed.Create, t)
+}
+
+func TestPatch(t *testing.T) {
+	testFileCreation(rebed.Patch, t)
+}
+
+func testFileCreation(rebedder func(embed.FS) error, t *testing.T) {
+	// shadow testDir
+	tDir := filepath.Join(testDir, t.Name())
+	setup(tDir, t)
+	defer os.RemoveAll(tDir)
+	err := rebedder(testFS)
+	if err != nil {
+		t.Error(err)
+	}
+	err = rebed.Walk(testFS, ".", func(path string, de fs.DirEntry) error {
+		pathToCreated := filepath.Join(path, de.Name())
+		info, err := os.Stat(pathToCreated)
+		if err != nil {
+			return err
+		}
+		if de.IsDir() != info.IsDir() {
+			t.Errorf("expected folder/file got file/folder %q", pathToCreated)
+		}
+		return nil
+	})
+}
+
+func cleanup(path string) error {
+	matcher := filepath.Join(path, "*")
 	filesToRemove, err := filepath.Glob(matcher)
 	if err != nil {
 		return err
@@ -57,31 +97,4 @@ func cleanup() error {
 		os.RemoveAll(f)
 	}
 	return nil
-}
-
-func isIn(path string, fsys embed.FS) bool {
-	errFound := fmt.Errorf("found file!")
-	errLook := rebed.Walk(fsys, ".", func(embedPath string, de fs.DirEntry) error {
-		fullPath := filepath.Join(embedPath, de.Name())
-		if fullPath == "." {
-			return nil
-		}
-		if filepathCmp(fullPath, path) {
-			return errFound // exits immediately
-		}
-		return nil
-	})
-	return errLook == errFound
-}
-
-func filepathCmp(a, b string) bool {
-	return filepath.Clean(a) == filepath.Clean(b)
-}
-
-func baseFolder(fsys embed.FS) string {
-	folder, err := fsys.ReadDir(".")
-	if err != nil {
-		panic(err)
-	}
-	return folder[0].Name()
 }
