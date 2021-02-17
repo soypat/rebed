@@ -51,6 +51,9 @@ func TestTree(t *testing.T) {
 		}
 		return nil
 	})
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestTouch(t *testing.T) {
@@ -85,6 +88,9 @@ func testFileCreation(rebedder func(embed.FS) error, t *testing.T) {
 		}
 		return nil
 	})
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func cleanup(path string) error {
