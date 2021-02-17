@@ -1,6 +1,11 @@
-// package rebed
+// Package rebed brings simple embedded file functionality
+// to Go's new embed directive.
 //
-//
+// It can recreate the directory structure
+// from the embed.FS type with or without
+// the files it contains. This is useful to
+// expose the filesystem to the end user so they
+// may see and modify the files.
 package rebed
 
 import (
@@ -36,12 +41,11 @@ func Touch(fsys embed.FS) error {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
 		// unsure how IsNotExist works. this could be improved
-		if _, err := os.Stat(fullpath); os.IsNotExist(err) {
+		_, err := os.Stat(fullpath)
+		if os.IsNotExist(err) {
 			_, err = os.Create(fullpath)
-			return err
-		} else {
-			return nil
 		}
+		return err
 	})
 }
 
@@ -66,13 +70,11 @@ func Patch(fsys embed.FS) error {
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
-		// unsure how IsNotExist works. this could be improved
-		if _, err := os.Stat(fullpath); os.IsNotExist(err) {
+		_, err := os.Stat(fullpath)
+		if os.IsNotExist(err) {
 			_, err = os.Create(fullpath)
-			return err
-		} else {
-			return nil
 		}
+		return err
 	})
 }
 
