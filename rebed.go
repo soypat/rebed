@@ -72,7 +72,7 @@ func Patch(fsys embed.FS) error {
 		}
 		_, err := os.Stat(fullpath)
 		if os.IsNotExist(err) {
-			_, err = os.Create(fullpath)
+			err = embedCopyToFile(fsys, fullpath)
 		}
 		return err
 	})
