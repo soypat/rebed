@@ -21,9 +21,9 @@ import (
 const folderPerm os.FileMode = 0755
 
 // Tree creates the target filesystem folder structure.
-func Tree(fsys embed.FS) error {
+func Tree(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		fullpath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, dirpath, de.Name())
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
@@ -34,9 +34,9 @@ func Tree(fsys embed.FS) error {
 // Touch creates the target filesystem folder structure in the binary's
 // current working directory with empty files. Does not modify
 // already existing files.
-func Touch(fsys embed.FS) error {
+func Touch(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		fullpath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, dirpath, de.Name())
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
@@ -49,12 +49,12 @@ func Touch(fsys embed.FS) error {
 	})
 }
 
-// Create overwrites files of same path/name
+// Write overwrites files of same path/name
 // in binaries current working directory or
 // creates new ones if not exist.
-func Create(fsys embed.FS) error {
+func Write(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		fullpath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, dirpath, de.Name())
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
@@ -64,9 +64,9 @@ func Create(fsys embed.FS) error {
 
 // Patch creates files which are missing in
 // FS filesystem. Does not modify existing files
-func Patch(fsys embed.FS) error {
+func Patch(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		fullpath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, dirpath, de.Name())
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}

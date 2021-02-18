@@ -30,7 +30,7 @@ func TestTree(t *testing.T) {
 	tDir := filepath.Join(testDir, t.Name())
 	setup(tDir, t)
 	defer os.RemoveAll(tDir)
-	err := rebed.Tree(testFS)
+	err := rebed.Tree(testFS, "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -61,19 +61,19 @@ func TestTouch(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	testFileCreation(rebed.Create, t)
+	testFileCreation(rebed.Write, t)
 }
 
 func TestPatch(t *testing.T) {
 	testFileCreation(rebed.Patch, t)
 }
 
-func testFileCreation(rebedder func(embed.FS) error, t *testing.T) {
+func testFileCreation(rebedder func(embed.FS, string) error, t *testing.T) {
 	// shadow testDir
 	tDir := filepath.Join(testDir, t.Name())
 	setup(tDir, t)
 	defer os.RemoveAll(tDir)
-	err := rebedder(testFS)
+	err := rebedder(testFS, "")
 	if err != nil {
 		t.Error(err)
 	}
