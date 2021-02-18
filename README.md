@@ -25,7 +25,7 @@ rebed.Touch(bdFS,"")
 rebed.Create(bdFS,"")
 
 // Recreate FS without modifying existing files
-rebed.Patch(bdFS,""a)
+rebed.Patch(bdFS,"")
 ```
 
 ### Where is this useful?
