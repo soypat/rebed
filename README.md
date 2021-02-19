@@ -22,10 +22,12 @@ rebed.Tree(bdFS,"")
 rebed.Touch(bdFS,"")
 
 // Recreate entire FS
-rebed.Create(bdFS,"")
+rebed.Write(bdFS,"")
 
 // Recreate FS without modifying existing files
 rebed.Patch(bdFS,"")
+
+/* Walk allows you operate on each file as you wish */
 ```
 
 ### Where is this useful?

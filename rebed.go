@@ -6,6 +6,9 @@
 // the files it contains. This is useful to
 // expose the filesystem to the end user so they
 // may see and modify the files.
+//
+// It also provides basic directory walking functionality for
+// the embed.FS type.
 package rebed
 
 import (
@@ -54,11 +57,12 @@ func Touch(fsys embed.FS, outputPath string) error {
 // creates new ones if not exist.
 func Write(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		fullpath := filepath.Join(outputPath, dirpath, de.Name())
+		embedPath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, embedPath)
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
-		return embedCopyToFile(fsys, fullpath)
+		return embedCopyToFile(fsys, embedPath, fullpath)
 	})
 }
 
@@ -66,55 +70,49 @@ func Write(fsys embed.FS, outputPath string) error {
 // FS filesystem. Does not modify existing files
 func Patch(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		fullpath := filepath.Join(outputPath, dirpath, de.Name())
+		embedPath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, embedPath)
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
 		}
 		_, err := os.Stat(fullpath)
 		if os.IsNotExist(err) {
-			err = embedCopyToFile(fsys, fullpath)
+			err = embedCopyToFile(fsys, embedPath, fullpath)
 		}
 		return err
 	})
 }
 
-// embedCopyToFile copies an embedded file's contents
-// to a file machine in same relative path
-func embedCopyToFile(fsys embed.FS, path string) error {
-	fi, err := fsys.Open(path)
-	if err != nil {
-		return err
-	}
-	fo, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(fo, fi)
-	return err
-}
-
-// Walk expects a path to a directory.
+// Walk expects a relative path within fsys.
 // f called on every file/directory found recursively.
-// It is not guaranteed to stay in main package import path.
 //
 // f's first argument is the relative/absolute path to directory being scanned.
+// "." as startPath will scan all files and folders.
+//
+// Any error returned by f will cause Walk to return said error immediately.
 func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) error) error {
 	folders := make([]string, 0) // buffer of folders to process
-	WalkDir(fsys, startPath, func(dirpath string, de fs.DirEntry) error {
+	err := WalkDir(fsys, startPath, func(dirpath string, de fs.DirEntry) error {
 		if de.IsDir() {
 			folders = append(folders, filepath.Join(dirpath, de.Name()))
 		}
 		return f(dirpath, de)
 	})
+	if err != nil {
+		return err
+	}
 	n := len(folders)
 	for n != 0 {
 		for i := 0; i < n; i++ {
-			WalkDir(fsys, folders[i], func(dirpath string, de fs.DirEntry) error {
+			err = WalkDir(fsys, folders[i], func(dirpath string, de fs.DirEntry) error {
 				if de.IsDir() {
 					folders = append(folders, filepath.Join(dirpath, de.Name()))
 				}
 				return f(dirpath, de)
 			})
+			if err != nil {
+				return err
+			}
 		}
 		// we process n folders at a time, add new folders while
 		//processing n folders, then discard those n folders once finished
@@ -127,7 +125,6 @@ func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) e
 }
 
 // WalkDir applies f to every file/folder in embedded directory fsys.
-// It is not guaranteed to stay in main package import path.
 //
 // f's first argument is the relative/absolute path to directory being scanned.
 func WalkDir(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) error) error {
@@ -141,4 +138,19 @@ func WalkDir(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry
 		}
 	}
 	return nil
+}
+
+// embedCopyToFile copies an embedded file's contents
+// to a file in same relative path
+func embedCopyToFile(fsys embed.FS, embedPath, path string) error {
+	fi, err := fsys.Open(embedPath)
+	if err != nil {
+		return err
+	}
+	fo, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(fo, fi)
+	return err
 }
