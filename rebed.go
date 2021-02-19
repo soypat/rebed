@@ -141,7 +141,7 @@ func WalkDir(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry
 }
 
 // embedCopyToFile copies an embedded file's contents
-// to a file in same relative path
+// to a file on the host machine.
 func embedCopyToFile(fsys embed.FS, embedPath, path string) error {
 	fi, err := fsys.Open(embedPath)
 	if err != nil {

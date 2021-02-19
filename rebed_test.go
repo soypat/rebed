@@ -2,6 +2,7 @@ package rebed_test
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -66,6 +67,25 @@ func TestCreate(t *testing.T) {
 
 func TestPatch(t *testing.T) {
 	testFileCreation(rebed.Patch, t)
+}
+
+func TestWalkError(t *testing.T) {
+	theError := fmt.Errorf("oops")
+	err := rebed.Walk(testFS, ".", func(path string, de fs.DirEntry) error {
+		return theError
+	})
+	if err != theError {
+		t.Errorf("Expected specific error, got %s", err)
+	}
+}
+
+func TestWalkDirError(t *testing.T) {
+	err := rebed.Walk(testFS, "nonexistent", func(path string, de fs.DirEntry) error {
+		return nil
+	})
+	if err == nil {
+		t.Errorf("expected error while walking non-existent directory")
+	}
 }
 
 func testFileCreation(rebedder func(embed.FS, string) error, t *testing.T) {
