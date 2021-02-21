@@ -23,6 +23,10 @@ import (
 // from being created.  0755=rwxr-xr-x
 const folderPerm os.FileMode = 0755
 
+// ErrExist returned by Create when encountering
+// a file conflict in filesystem creation
+var ErrExist error = os.ErrExist
+
 // Tree creates the target filesystem folder structure.
 func Tree(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
@@ -81,6 +85,33 @@ func Patch(fsys embed.FS, outputPath string) error {
 		}
 		return err
 	})
+}
+
+// Create attempts to recreate filesystem. It first checks that
+// there be no matching files present and returns an error
+// if there is an existing file conflict in outputPath.
+//
+// Folders are not considered to conflict.
+func Create(fsys embed.FS, outputPath string) error {
+	err := Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
+		embedPath := filepath.Join(dirpath, de.Name())
+		fullpath := filepath.Join(outputPath, embedPath)
+		if de.IsDir() {
+			return nil
+		}
+		_, err := os.Stat(fullpath)
+		if os.IsNotExist(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		return ErrExist
+	})
+	if err != nil {
+		return err
+	}
+	return Patch(fsys, outputPath)
 }
 
 // Walk expects a relative path within fsys.

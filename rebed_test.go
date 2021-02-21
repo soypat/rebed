@@ -22,16 +22,12 @@ const testDir = "testdata/testdir"
 func setup(path string, t *testing.T) {
 	os.RemoveAll(path)
 	os.MkdirAll(path, 0777)
-	err := os.Chdir(path)
-	if err != nil {
-		t.Error(err)
-	}
 }
 func TestTree(t *testing.T) {
 	tDir := filepath.Join(testDir, t.Name())
 	setup(tDir, t)
 	defer os.RemoveAll(tDir)
-	err := rebed.Tree(testFS, "")
+	err := rebed.Tree(testFS, tDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -61,12 +57,30 @@ func TestTouch(t *testing.T) {
 	testFileCreation(rebed.Touch, t)
 }
 
-func TestCreate(t *testing.T) {
+func TestWrite(t *testing.T) {
 	testFileCreation(rebed.Write, t)
 }
 
 func TestPatch(t *testing.T) {
 	testFileCreation(rebed.Patch, t)
+}
+
+func TestCreate(t *testing.T) {
+	testFileCreation(rebed.Create, t)
+}
+
+func TestCreateError(t *testing.T) {
+	tDir := filepath.Join(testDir, t.Name())
+	setup(tDir, t)
+	defer os.RemoveAll(tDir)
+	err := rebed.Create(testFS, tDir)
+	if err != nil {
+		t.Errorf("Create failed with new directory %s", err)
+	}
+	err = rebed.Create(testFS, tDir)
+	if err == nil || !os.IsExist(err) {
+		t.Errorf("Create should have failed during conflicting filesystem creation: %s", err)
+	}
 }
 
 func TestWalkError(t *testing.T) {
@@ -89,11 +103,10 @@ func TestWalkDirError(t *testing.T) {
 }
 
 func testFileCreation(rebedder func(embed.FS, string) error, t *testing.T) {
-	// shadow testDir
 	tDir := filepath.Join(testDir, t.Name())
 	setup(tDir, t)
 	defer os.RemoveAll(tDir)
-	err := rebedder(testFS, "")
+	err := rebedder(testFS, tDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -111,16 +124,4 @@ func testFileCreation(rebedder func(embed.FS, string) error, t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-func cleanup(path string) error {
-	matcher := filepath.Join(path, "*")
-	filesToRemove, err := filepath.Glob(matcher)
-	if err != nil {
-		return err
-	}
-	for _, f := range filesToRemove {
-		os.RemoveAll(f)
-	}
-	return nil
 }
