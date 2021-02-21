@@ -10,7 +10,7 @@ Recreate embedded filesystems from embed.FS type in current working directory.
 
 Expose the files you've embedded in your binary so users can see and/or tinker with them. See [where is this useful](#where-is-this-useful) for an application example.
 
-## Four actions available:
+## Five actions available:
 
 ```go
 
@@ -28,6 +28,9 @@ rebed.Write(bdFS,"")
 
 // Recreate FS without modifying existing files
 rebed.Patch(bdFS,"")
+
+// Runs Patch if no conflicting file is found, else error.
+err := rebed.Create(bdFS,"")
 
 /* Walk allows you operate on each file as you wish */
 ```
