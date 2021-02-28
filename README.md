@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/soypat/rebed.svg?branch=main)](https://travis-ci.org/soypat/rebed)
 [![Go Report Card](https://goreportcard.com/badge/github.com/soypat/rebed)](https://goreportcard.com/report/github.com/soypat/rebed)
 [![go.dev reference](https://pkg.go.dev/badge/github.com/soypat/rebed)](https://pkg.go.dev/github.com/soypat/rebed)
-[![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/avelino/awesome-go/blob/master/README.md#resource-embedding)
+[![Awesome](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go/blob/master/README.md#resource-embedding)
 
 
 Recreate embedded filesystems from embed.FS type in current working directory. 
