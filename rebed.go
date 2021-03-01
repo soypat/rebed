@@ -13,10 +13,12 @@ package rebed
 
 import (
 	"embed"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // folderPerm MkdirAll is called with this permission to prevent restricted folders
@@ -61,7 +63,7 @@ func Touch(fsys embed.FS, outputPath string) error {
 // creates new ones if not exist.
 func Write(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		embedPath := filepath.Join(dirpath, de.Name())
+		embedPath := sanitize(filepath.Join(dirpath, de.Name()))
 		fullpath := filepath.Join(outputPath, embedPath)
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
@@ -74,7 +76,7 @@ func Write(fsys embed.FS, outputPath string) error {
 // FS filesystem. Does not modify existing files
 func Patch(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
-		embedPath := filepath.Join(dirpath, de.Name())
+		embedPath := sanitize(filepath.Join(dirpath, de.Name()))
 		fullpath := filepath.Join(outputPath, embedPath)
 		if de.IsDir() {
 			return os.MkdirAll(fullpath, folderPerm)
@@ -130,7 +132,10 @@ func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) e
 		return f(dirpath, de)
 	})
 	if err != nil {
-		return err
+		if len(folders) == 0 {
+			return fmt.Errorf("no folder found: %v", err)
+		}
+		return fmt.Errorf("walking %v/: %v", folders[0], err)
 	}
 	n := len(folders)
 	for n != 0 {
@@ -142,7 +147,7 @@ func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) e
 				return f(dirpath, de)
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("walking %v: %v", folders[i], err)
 			}
 		}
 		// we process n folders at a time, add new folders while
@@ -159,6 +164,7 @@ func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) e
 //
 // f's first argument is the relative/absolute path to directory being scanned.
 func WalkDir(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) error) error {
+	startPath = sanitize(startPath)
 	items, err := fsys.ReadDir(startPath)
 	if err != nil {
 		return err
@@ -174,9 +180,10 @@ func WalkDir(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry
 // embedCopyToFile copies an embedded file's contents
 // to a file on the host machine.
 func embedCopyToFile(fsys embed.FS, embedPath, path string) error {
+	embedPath = sanitize(embedPath)
 	fi, err := fsys.Open(embedPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("opening embedded file %v: %v", embedPath, err)
 	}
 	fo, err := os.Create(path)
 	if err != nil {
@@ -184,4 +191,9 @@ func embedCopyToFile(fsys embed.FS, embedPath, path string) error {
 	}
 	_, err = io.Copy(fo, fi)
 	return err
+}
+
+// sanitize converts windows representation of path to embed.FS representation
+func sanitize(embedPath string) string {
+	return strings.ReplaceAll(embedPath, "\\", "/")
 }
