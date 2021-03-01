@@ -135,7 +135,7 @@ func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) e
 		if len(folders) == 0 {
 			return fmt.Errorf("no folder found: %v", err)
 		}
-		return fmt.Errorf("walking %v/: %v", folders[0], err)
+		return err
 	}
 	n := len(folders)
 	for n != 0 {
@@ -147,7 +147,7 @@ func Walk(fsys embed.FS, startPath string, f func(path string, de fs.DirEntry) e
 				return f(dirpath, de)
 			})
 			if err != nil {
-				return fmt.Errorf("walking %v: %v", folders[i], err)
+				return err
 			}
 		}
 		// we process n folders at a time, add new folders while
