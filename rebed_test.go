@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/soypat/rebed"
+	"github.com/chengziqing/rebed"
 )
 
 // defer os.Chdir(strings.Repeat("../", len(filepath.SplitList(testDir))))
