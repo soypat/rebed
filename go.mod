@@ -1,3 +1,3 @@
-module github.com/soypat/rebed
+module github.com/chengziqing/rebed
 
 go 1.16
