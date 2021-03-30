@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/soypat/rebed)](https://goreportcard.com/report/github.com/soypat/rebed)
 [![go.dev reference](https://pkg.go.dev/badge/github.com/soypat/rebed)](https://pkg.go.dev/github.com/soypat/rebed)
 [![Awesome](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go/blob/master/README.md#resource-embedding)
-
+[![Sourcegraph](https://sourcegraph.com/github.com/soypat/rebed/-/badge.svg)](https://sourcegraph.com/github.com/soypat/rebed?badge)
 
 Recreate embedded filesystems from embed.FS type in current working directory. 
 
