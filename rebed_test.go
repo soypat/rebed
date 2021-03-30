@@ -1,4 +1,4 @@
-package rebed_test
+package rebed
 
 import (
 	"embed"
@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/soypat/rebed"
 )
 
 // defer os.Chdir(strings.Repeat("../", len(filepath.SplitList(testDir))))
@@ -27,12 +25,12 @@ func TestTree(t *testing.T) {
 	tDir := filepath.Join(testDir, t.Name())
 	setup(tDir, t)
 	defer os.RemoveAll(tDir)
-	err := rebed.Tree(testFS, tDir)
+	err := Tree(testFS, tDir)
 	if err != nil {
 		t.Error(err)
 	}
 	// We search our embedded directories and check if our created filesystem has the entries
-	err = rebed.Walk(testFS, ".", func(path string, de fs.DirEntry) error {
+	err = Walk(testFS, ".", func(path string, de fs.DirEntry) error {
 		pathToCreated := filepath.Join(path, de.Name())
 		if de.IsDir() {
 			info, err := os.Stat(pathToCreated)
@@ -54,30 +52,30 @@ func TestTree(t *testing.T) {
 }
 
 func TestTouch(t *testing.T) {
-	testFileCreation(rebed.Touch, t)
+	testFileCreation(Touch, t)
 }
 
 func TestWrite(t *testing.T) {
-	testFileCreation(rebed.Write, t)
+	testFileCreation(Write, t)
 }
 
 func TestPatch(t *testing.T) {
-	testFileCreation(rebed.Patch, t)
+	testFileCreation(Patch, t)
 }
 
 func TestCreate(t *testing.T) {
-	testFileCreation(rebed.Create, t)
+	testFileCreation(Create, t)
 }
 
 func TestCreateError(t *testing.T) {
 	tDir := filepath.Join(testDir, t.Name())
 	setup(tDir, t)
 	defer os.RemoveAll(tDir)
-	err := rebed.Create(testFS, tDir)
+	err := Create(testFS, tDir)
 	if err != nil {
 		t.Errorf("Create failed with new directory %s", err)
 	}
-	err = rebed.Create(testFS, tDir)
+	err = Create(testFS, tDir)
 	if err == nil || !os.IsExist(err) {
 		t.Errorf("Create should have failed during conflicting filesystem creation: %s", err)
 	}
@@ -85,7 +83,7 @@ func TestCreateError(t *testing.T) {
 
 func TestWalkError(t *testing.T) {
 	theError := fmt.Errorf("oops")
-	err := rebed.Walk(testFS, ".", func(path string, de fs.DirEntry) error {
+	err := Walk(testFS, ".", func(path string, de fs.DirEntry) error {
 		return theError
 	})
 	if err != theError {
@@ -94,7 +92,7 @@ func TestWalkError(t *testing.T) {
 }
 
 func TestWalkDirError(t *testing.T) {
-	err := rebed.Walk(testFS, "nonexistent", func(path string, de fs.DirEntry) error {
+	err := Walk(testFS, "nonexistent", func(path string, de fs.DirEntry) error {
 		return nil
 	})
 	if err == nil {
@@ -110,7 +108,7 @@ func testFileCreation(rebedder func(embed.FS, string) error, t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = rebed.Walk(testFS, ".", func(path string, de fs.DirEntry) error {
+	err = Walk(testFS, ".", func(path string, de fs.DirEntry) error {
 		pathToCreated := filepath.Join(path, de.Name())
 		info, err := os.Stat(pathToCreated)
 		if err != nil {
@@ -123,5 +121,16 @@ func testFileCreation(rebedder func(embed.FS, string) error, t *testing.T) {
 	})
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestEmbedCopyErrors(t *testing.T) {
+	err := embedCopyToFile(testFS, "nonexistent/File/path", "outputPath")
+	if err == nil {
+		t.Error("file should not have existed!")
+	}
+	err = embedCopyToFile(testFS, "testFS/file", "nonexistentfolder/file")
+	if err == nil {
+		t.Error("copying to a nonexistent folder should error")
 	}
 }

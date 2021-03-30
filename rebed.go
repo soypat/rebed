@@ -189,6 +189,8 @@ func embedCopyToFile(fsys embed.FS, embedPath, path string) error {
 	if err != nil {
 		return err
 	}
+	// Thank you chengziqing for spotting this
+	defer fo.Close()
 	_, err = io.Copy(fo, fi)
 	return err
 }
