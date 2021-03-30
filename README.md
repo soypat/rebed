@@ -10,6 +10,12 @@ Recreate embedded filesystems from embed.FS type in current working directory.
 
 Expose the files you've embedded in your binary so users can see and/or tinker with them. See [where is this useful](#where-is-this-useful) for an application example.
 
+Install with (requires Go 1.16+)
+
+```shell-script
+go get -u github.com/soypat/rebed
+```
+
 ## Five actions available:
 
 ```go
@@ -18,19 +24,19 @@ Expose the files you've embedded in your binary so users can see and/or tinker w
 var bdFS embed.FS
 
 // Just replicate folder Structure
-rebed.Tree(bdFS,"")
+rebed.Tree(bdFS, "")
 
 // Make empty files
-rebed.Touch(bdFS,"")
+rebed.Touch(bdFS, "")
 
 // Recreate entire FS
-rebed.Write(bdFS,"")
+rebed.Write(bdFS, "")
 
 // Recreate FS without modifying existing files
-rebed.Patch(bdFS,"")
+rebed.Patch(bdFS, "")
 
 // Runs Patch if no conflicting file is found, else error.
-err := rebed.Create(bdFS,"")
+err := rebed.Create(bdFS, "")
 
 /* Walk allows you operate on each file as you wish */
 ```
