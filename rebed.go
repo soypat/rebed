@@ -21,9 +21,9 @@ import (
 	"strings"
 )
 
-// folderPerm MkdirAll is called with this permission to prevent restricted folders
-// from being created.  0755=rwxr-xr-x
-const folderPerm os.FileMode = 0755
+// FolderMode MkdirAll is called with this permission to prevent restricted folders
+// from being created. Default value is 0755=rwxr-xr-x.
+var FolderMode os.FileMode = 0755
 
 // ErrExist returned by Create when encountering
 // a file conflict in filesystem creation
@@ -34,7 +34,7 @@ func Tree(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
 		fullpath := filepath.Join(outputPath, dirpath, de.Name())
 		if de.IsDir() {
-			return os.MkdirAll(fullpath, folderPerm)
+			return os.MkdirAll(fullpath, FolderMode)
 		}
 		return nil
 	})
@@ -47,7 +47,7 @@ func Touch(fsys embed.FS, outputPath string) error {
 	return Walk(fsys, ".", func(dirpath string, de fs.DirEntry) error {
 		fullpath := filepath.Join(outputPath, dirpath, de.Name())
 		if de.IsDir() {
-			return os.MkdirAll(fullpath, folderPerm)
+			return os.MkdirAll(fullpath, FolderMode)
 		}
 		// unsure how IsNotExist works. this could be improved
 		_, err := os.Stat(fullpath)
@@ -66,7 +66,7 @@ func Write(fsys embed.FS, outputPath string) error {
 		embedPath := sanitize(filepath.Join(dirpath, de.Name()))
 		fullpath := filepath.Join(outputPath, embedPath)
 		if de.IsDir() {
-			return os.MkdirAll(fullpath, folderPerm)
+			return os.MkdirAll(fullpath, FolderMode)
 		}
 		return embedCopyToFile(fsys, embedPath, fullpath)
 	})
@@ -79,7 +79,7 @@ func Patch(fsys embed.FS, outputPath string) error {
 		embedPath := sanitize(filepath.Join(dirpath, de.Name()))
 		fullpath := filepath.Join(outputPath, embedPath)
 		if de.IsDir() {
-			return os.MkdirAll(fullpath, folderPerm)
+			return os.MkdirAll(fullpath, FolderMode)
 		}
 		_, err := os.Stat(fullpath)
 		if os.IsNotExist(err) {
